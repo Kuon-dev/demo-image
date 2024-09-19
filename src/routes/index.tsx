@@ -69,6 +69,7 @@ export const Modal = component$<ModalProps>((props) => {
       >
         <button
           onClick$={props.onClose}
+          aria-label="view zoom"
           class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 w-8 h-8 flex items-center justify-center rounded-full bg-white shadow-md z-10"
         >
           ×
@@ -115,12 +116,12 @@ export const LazyImage = component$<LazyImageProps>((props) => {
 
   return (
     <div 
-      class={`w-full ${height.value > 300 ? 'row-span-3' : 'row-span-2'} flex flex-row items-center justify-center`}
+      class={`w-full ${height.value > 300 ? 'sm:row-span-3 row-span-2' : 'sm:row-span-2 row-span-1'} flex flex-row items-center justify-center`}
       data-swapy-slot={`slot-${props.id}`}
     >
       {imageUrl.value && (
         <div 
-          class="relative w-full h-full overflow-hidden group"
+          class="relative w-full h-full overflow-hidden group flex items-center justify-center"
           data-swapy-item={`image-${props.id}`}
         >
           <Image
@@ -136,6 +137,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
             <button
               onClick$={() => props.onClick$(`https://picsum.photos/seed/${props.id}/600`)}
               class="p-2 m-2 bg-white text-black font-bold rounded-md hover:bg-gray-200 transition-colors duration-300"
+              aria-label="zoom"
             >
               <RadixIconsEyeOpen />
             </button>
@@ -188,7 +190,7 @@ export const ImageMasonry = component$(() => {
       <h1 class="text-3xl font-bold mb-8 text-center">Random Image Gallery</h1>
       <div 
         ref={containerRef}
-        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[100px]"
+        class="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[100px]"
       >
         {state.imageIds.map((id, index) => (
           <LazyImage id={id} index={index} onClick$={openModal} key={id}/>
