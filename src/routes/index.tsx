@@ -1,4 +1,14 @@
-import { component$, useStore, useSignal, $, useTask$, useStylesScoped$, useOnDocument, QRL } from '@builder.io/qwik';
+import {
+  component$,
+  useStore,
+  useSignal,
+  $,
+  useTask$,
+  useStylesScoped$,
+  useOnDocument,
+  useVisibleTask$,
+} from '@builder.io/qwik';
+import type { QRL } from '@builder.io/qwik';
 import { Image } from "@unpic/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
@@ -84,11 +94,11 @@ export const LazyImage = component$<LazyImageProps>((props) => {
   const imageUrl = useSignal<string | null>(null);
   const height = useSignal(Math.floor(Math.random() * (400 - 200 + 1)) + 200);
 
-  useTask$(({ track }) => {
+  useVisibleTask$(({ track }) => {
     track(() => props.id);
     const width = 300;
     imageUrl.value = `https://picsum.photos/seed/${props.id}/${width}/${height.value}`;
-  });
+  }, {strategy: 'intersection-observer' });
 
   return (
     <div class="break-inside-avoid mb-4">
