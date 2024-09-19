@@ -37,13 +37,9 @@ export const ImageMasonry = component$(() => {
     loading: true,
   });
 
-  useVisibleTask$(() => {
-    if (isBrowser) {
-      const newImageIds = Array.from({ length: 500 }, (_, i) => Date.now() + i);
-      state.imageIds = newImageIds;
-      state.loading = false;
-    }
-  });
+  const newImageIds = Array.from({ length: 500 }, (_, i) => Date.now() + i);
+  state.imageIds = newImageIds;
+  state.loading = false;
 
   return (
     <div class="container mx-auto px-4">
