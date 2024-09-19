@@ -1,4 +1,4 @@
-import { component$, useVisibleTask$, useStore, $, useSignal, useTask$ } from '@builder.io/qwik';
+import { component$, useVisibleTask$, useStore, useSignal } from '@builder.io/qwik';
 import { isBrowser } from '@builder.io/qwik/build';
 import { Image } from "@unpic/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
