@@ -105,7 +105,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
   }, {strategy: 'intersection-observer' });
 
   return (
-    <div class={`w-full ${height.value > 300 ? 'row-span-2' : 'row-span-1'}`}>
+    <div class={`w-full ${height.value > 300 ? 'row-span-3' : 'row-span-2'} flex flex-row items-center justify-center`}>
       {imageUrl.value && (
         <Image
           src={imageUrl.value}
@@ -136,7 +136,6 @@ export const ImageMasonry = component$(() => {
       grid-gap: 1rem;
     }
     .masonry-grid > div {
-      grid-row-end: span calc(var(--height) / 50);
     }
   `);
 
