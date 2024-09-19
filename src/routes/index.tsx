@@ -6,6 +6,7 @@ import {
   useStylesScoped$,
   useOnDocument,
   useVisibleTask$,
+  useTask$,
 } from '@builder.io/qwik';
 import type { QRL } from '@builder.io/qwik';
 import { Image } from "@unpic/qwik";
@@ -93,14 +94,18 @@ export const LazyImage = component$<LazyImageProps>((props) => {
   const imageUrl = useSignal<string | null>(null);
   const height = useSignal(Math.floor(Math.random() * (400 - 200 + 1)) + 200);
 
-  useVisibleTask$(({ track }) => {
-    track(() => props.id);
-    const width = 300;
-    imageUrl.value = `https://picsum.photos/seed/${props.id}/${width}/${height.value}`;
-  }, {strategy: props.index < 20 ? 'document-ready' : 'intersection-observer' });
+  useTask$(() => {
+    if (props.index > 20) return
+    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
+  })
+
+  useVisibleTask$(() => {
+    if (props.index <= 20) return
+    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
+  }, {strategy: 'intersection-observer' });
 
   return (
-    <div class="break-inside-avoid mb-4">
+    <div class={`w-full ${height.value > 300 ? 'row-span-2' : 'row-span-1'}`}>
       {imageUrl.value && (
         <Image
           src={imageUrl.value}
@@ -108,9 +113,8 @@ export const LazyImage = component$<LazyImageProps>((props) => {
           width={300}
           height={height.value}
           alt={`Random image ${props.id}`}
-          class="w-full rounded-lg shadow-md cursor-pointer"
+          class="w-full h-full object-cover rounded-lg shadow-md cursor-pointer"
           priority={props.index < 20}
-          loading={props.index < 20 ? "eager" : "lazy"}
           onClick$={() => props.onClick$(imageUrl.value!.replace(`/${300}/`, '/600/'))}
         />
       )}
@@ -124,8 +128,22 @@ export const ImageMasonry = component$(() => {
   });
   const selectedImage = useSignal<string | null>(null);
 
-  const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
-  state.imageIds = newImageIds;
+  useStylesScoped$(`
+    .masonry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      grid-auto-rows: 100px;
+      grid-gap: 1rem;
+    }
+    .masonry-grid > div {
+      grid-row-end: span calc(var(--height) / 50);
+    }
+  `);
+
+  useTask$(() => {
+    const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
+    state.imageIds = newImageIds;
+  })
 
   const openModal = $((src: string) => {
     selectedImage.value = src;
@@ -136,13 +154,13 @@ export const ImageMasonry = component$(() => {
   });
 
   return (
-    <div class="mx-auto max-w-[692px] overflow-x-hidden px-6 pb-12 pt-4 antialiased sm:py-32 md:overflow-x-visible md:pb-12 md:pt-4">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 class="text-3xl font-bold mb-8 text-center">Random Image Gallery</h1>
-        <div class="columns-1 sm:columns-2 md:columns-3 gap-4">
-          {state.imageIds.map((id, index) => (
-            <LazyImage key={id} id={id} index={index} onClick$={openModal} />
-          ))}
-        </div>
+      <div class="masonry-grid">
+        {state.imageIds.map((id, index) => (
+          <LazyImage key={id} id={id} index={index} onClick$={openModal} />
+        ))}
+      </div>
       {selectedImage.value && (
         <Modal src={selectedImage.value} alt="Selected image" onClose={closeModal} />
       )}
