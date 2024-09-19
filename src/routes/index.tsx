@@ -97,7 +97,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
     track(() => props.id);
     const width = 300;
     imageUrl.value = `https://picsum.photos/seed/${props.id}/${width}/${height.value}`;
-  }, {strategy: 'intersection-observer' });
+  }, {strategy: props.index < 20 ? 'document-ready' : 'intersection-observer' });
 
   return (
     <div class="break-inside-avoid mb-4">
@@ -109,6 +109,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
           height={height.value}
           alt={`Random image ${props.id}`}
           class="w-full rounded-lg shadow-md cursor-pointer"
+          priority={props.index < 20}
           loading={props.index < 20 ? "eager" : "lazy"}
           onClick$={() => props.onClick$(imageUrl.value!.replace(`/${300}/`, '/600/'))}
         />
@@ -120,13 +121,11 @@ export const LazyImage = component$<LazyImageProps>((props) => {
 export const ImageMasonry = component$(() => {
   const state = useStore({
     imageIds: [] as number[],
-    loading: true,
   });
   const selectedImage = useSignal<string | null>(null);
 
   const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
   state.imageIds = newImageIds;
-  state.loading = false;
 
   const openModal = $((src: string) => {
     selectedImage.value = src;
