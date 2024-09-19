@@ -3,7 +3,6 @@ import {
   useStore,
   useSignal,
   $,
-  useTask$,
   useStylesScoped$,
   useOnDocument,
   useVisibleTask$,
@@ -125,11 +124,9 @@ export const ImageMasonry = component$(() => {
   });
   const selectedImage = useSignal<string | null>(null);
 
-  useTask$(() => {
-    const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
-    state.imageIds = newImageIds;
-    state.loading = false;
-  });
+  const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
+  state.imageIds = newImageIds;
+  state.loading = false;
 
   const openModal = $((src: string) => {
     selectedImage.value = src;
@@ -142,15 +139,11 @@ export const ImageMasonry = component$(() => {
   return (
     <div class="mx-auto max-w-[692px] overflow-x-hidden px-6 pb-12 pt-4 antialiased sm:py-32 md:overflow-x-visible md:pb-12 md:pt-4">
       <h1 class="text-3xl font-bold mb-8 text-center">Random Image Gallery</h1>
-      {state.loading ? (
-        <div class="text-center">Loading images...</div>
-      ) : (
         <div class="columns-1 sm:columns-2 md:columns-3 gap-4">
           {state.imageIds.map((id, index) => (
             <LazyImage key={id} id={id} index={index} onClick$={openModal} />
           ))}
         </div>
-      )}
       {selectedImage.value && (
         <Modal src={selectedImage.value} alt="Selected image" onClose={closeModal} />
       )}
