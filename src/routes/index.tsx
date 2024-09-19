@@ -156,7 +156,7 @@ export const ImageMasonry = component$(() => {
   const containerRef = useSignal<Element | undefined>();
 
   useTask$(() => {
-    const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
+    const newImageIds = Array.from({ length: 500}, (_, i) => Date.now() + i);
     state.imageIds = newImageIds;
   });
 
@@ -173,17 +173,11 @@ export const ImageMasonry = component$(() => {
   }) => {
     track(() => state.imageIds)
     if (containerRef.value) {
-      const swapy = Swapy.createSwapy(containerRef.value, {
+      Swapy.createSwapy(containerRef.value, {
         animation: 'dynamic'
       });
-      //
-      swapy.onSwap((event: any) => {
-        console.log(event)
-        console.log('New order:', event.data.array);
-        // Here you can update your state or send the new order to a server
-      });
     }
-  });
+  }, {strategy: 'document-idle'});
 
   return (
     <div class="mx-auto max-w-[692px] overflow-x-hidden px-6 pb-12 pt-4 antialiased sm:py-32 md:overflow-x-visible md:pb-12 md:pt-4">
