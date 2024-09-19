@@ -100,7 +100,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
   })
 
   useVisibleTask$(() => {
-    if (props.index <= 20) return
+    if (props.index <= 10) return
     imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
   }, {strategy: 'intersection-observer' });
 
