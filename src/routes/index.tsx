@@ -115,7 +115,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
           alt={`Random image ${props.id}`}
           class="w-full h-full object-cover rounded-lg shadow-md cursor-pointer"
           priority={props.index < 20}
-          onClick$={() => props.onClick$(imageUrl.value!.replace(`/${300}/`, '/600/'))}
+          onClick$={() => props.onClick$(`https://picsum.photos/seed/${props.id}/600`!)}
         />
       )}
     </div>
