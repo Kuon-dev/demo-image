@@ -95,7 +95,7 @@ export const LazyImage = component$<LazyImageProps>((props) => {
   const height = useSignal(Math.floor(Math.random() * (400 - 200 + 1)) + 200);
 
   useTask$(() => {
-    if (props.index > 20) return
+    if (props.index > 10) return
     imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
   })
 
