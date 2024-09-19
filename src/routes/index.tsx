@@ -1,40 +1,47 @@
-import { component$, useVisibleTask$, useStore, $ } from '@builder.io/qwik';
+import { component$, useVisibleTask$, useStore, $, useSignal, useTask$ } from '@builder.io/qwik';
 import { isBrowser } from '@builder.io/qwik/build';
 import { Image } from "@unpic/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
-interface ImageData {
-  url: string;
-  id: number;
-}
+const LazyImage = component$((props: { id: number }) => {
+  const imageUrl = useSignal<string | null>(null);
+
+  useVisibleTask$(({ track }) => {
+    track(() => props.id);
+    const width = 300;
+    const height = 200;
+    imageUrl.value = `https://picsum.photos/seed/${props.id}/${width}/${height}`;
+  }, {strategy: 'intersection-observer'});
+
+  return (
+    <div class="break-inside-avoid mb-4">
+      {imageUrl.value && (
+        <Image
+          src={imageUrl.value}
+          layout="constrained"
+          width={300}
+          height={200}
+          alt={`Random image ${props.id}`}
+          class="w-full rounded-lg shadow-md"
+          loading="lazy"
+        />
+      )}
+      <p class="mt-2 text-sm text-gray-600">Image ID: {props.id}</p>
+    </div>
+  );
+});
 
 export const ImageMasonry = component$(() => {
   const state = useStore({
-    images: [] as ImageData[],
+    imageIds: [] as number[],
     loading: true,
-  });
-
-  const generateImageUrl = $((id: number) => {
-    const width = 300;
-    const height = 200;
-    return `https://picsum.photos/seed/${id}/${width}/${height}`;
-  });
-
-  const loadImages = $(async () => {
-    state.loading = true;
-    const newImages: ImageData[] = [];
-    for (let i = 0; i < 500; i++) {
-      const id = Date.now() + i; // Ensures unique ID for each image
-      const url = await generateImageUrl(id);
-      newImages.push({ url, id });
-    }
-    state.images = newImages;
-    state.loading = false;
   });
 
   useVisibleTask$(() => {
     if (isBrowser) {
-      loadImages();
+      const newImageIds = Array.from({ length: 500 }, (_, i) => Date.now() + i);
+      state.imageIds = newImageIds;
+      state.loading = false;
     }
   });
 
@@ -45,18 +52,8 @@ export const ImageMasonry = component$(() => {
         <div class="text-center">Loading images...</div>
       ) : (
         <div class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4">
-          {state.images.map((image) => (
-            <div key={image.id} class="break-inside-avoid mb-4">
-              <Image
-                src={image.url}
-                layout="constrained"
-                width={300}
-                height={200}
-                alt={`Random image ${image.id}`}
-                class="w-full rounded-lg shadow-md"
-              />
-              <p class="mt-2 text-sm text-gray-600">Image ID: {image.id}</p>
-            </div>
+          {state.imageIds.map((id) => (
+            <LazyImage key={id} id={id} />
           ))}
         </div>
       )}
@@ -77,7 +74,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "A gallery of unique random images using Qwik and Unpic",
+      content: "A gallery of unique random images using Qwik and Unpic with lazy loading",
     },
   ],
 };
