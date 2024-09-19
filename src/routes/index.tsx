@@ -8,7 +8,8 @@ import {
   useVisibleTask$,
   useTask$,
 } from '@builder.io/qwik';
-import type { QRL } from '@builder.io/qwik';
+import type { QRL, QwikIntrinsicElements } from '@builder.io/qwik';
+import * as Swapy from 'swapy';
 import { Image } from "@unpic/qwik";
 import type { DocumentHead } from "@builder.io/qwik-city";
 
@@ -16,6 +17,13 @@ interface ModalProps {
   src: string;
   alt: string;
   onClose: QRL<() => void>;
+}
+
+
+export function RadixIconsEyeOpen(props: QwikIntrinsicElements['svg'], key: string) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 15 15" {...props} key={key}><path fill="currentColor" fill-rule="evenodd" d="M7.5 11c-2.697 0-4.97-1.378-6.404-3.5C2.53 5.378 4.803 4 7.5 4s4.97 1.378 6.404 3.5C12.47 9.622 10.197 11 7.5 11m0-8C4.308 3 1.656 4.706.076 7.235a.5.5 0 0 0 0 .53C1.656 10.294 4.308 12 7.5 12s5.844-1.706 7.424-4.235a.5.5 0 0 0 0-.53C13.344 4.706 10.692 3 7.5 3m0 6.5a2 2 0 1 0 0-4a2 2 0 0 0 0 4" clip-rule="evenodd"></path></svg>
+  )
 }
 
 export const Modal = component$<ModalProps>((props) => {
@@ -93,30 +101,46 @@ interface LazyImageProps {
 export const LazyImage = component$<LazyImageProps>((props) => {
   const imageUrl = useSignal<string | null>(null);
   const height = useSignal(Math.floor(Math.random() * (400 - 200 + 1)) + 200);
+  useTask$((p) => {
+    p.track(() => props.index)
+    if (props.index > 10) return;
+    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${400}`;
+  });
 
-  useTask$(() => {
-    if (props.index > 10) return
-    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
-  })
-
-  useVisibleTask$(() => {
-    if (props.index <= 10) return
-    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${height.value}`;
-  }, {strategy: 'intersection-observer' });
+  useVisibleTask$((p) => {
+    p.track(() => props.index)
+    if (props.index <= 10) return;
+    imageUrl.value = `https://picsum.photos/seed/${props.id}/200/${400}`;
+  }, { strategy: 'intersection-observer' });
 
   return (
-    <div class={`w-full ${height.value > 300 ? 'row-span-3' : 'row-span-2'} flex flex-row items-center justify-center`}>
+    <div 
+      class={`w-full ${height.value > 300 ? 'row-span-3' : 'row-span-2'} flex flex-row items-center justify-center`}
+      data-swapy-slot={`slot-${props.id}`}
+    >
       {imageUrl.value && (
-        <Image
-          src={imageUrl.value}
-          layout="constrained"
-          width={300}
-          height={height.value}
-          alt={`Random image ${props.id}`}
-          class="w-full h-full object-cover rounded-lg shadow-md cursor-pointer"
-          priority={props.index < 20}
-          onClick$={() => props.onClick$(`https://picsum.photos/seed/${props.id}/600`!)}
-        />
+        <div 
+          class="relative w-full h-full overflow-hidden group"
+          data-swapy-item={`image-${props.id}`}
+        >
+          <Image
+            src={imageUrl.value}
+            layout="constrained"
+            width={300}
+            aspectRatio={2/3}
+            alt={`Random image ${props.id}`}
+            class="w-full h-full object-cover rounded-lg shadow-md cursor-pointer transition-transform duration-300 group-hover:scale-105"
+            priority={props.index < 20}
+          />
+          <div class="absolute inset-0 flex items-start justify-end">
+            <button
+              onClick$={() => props.onClick$(`https://picsum.photos/seed/${props.id}/600`)}
+              class="p-2 m-2 bg-white text-black font-bold rounded-md hover:bg-gray-200 transition-colors duration-300"
+            >
+              <RadixIconsEyeOpen />
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -127,22 +151,12 @@ export const ImageMasonry = component$(() => {
     imageIds: [] as number[],
   });
   const selectedImage = useSignal<string | null>(null);
-
-  useStylesScoped$(`
-    .masonry-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      grid-auto-rows: 100px;
-      grid-gap: 1rem;
-    }
-    .masonry-grid > div {
-    }
-  `);
+  const containerRef = useSignal<Element | undefined>();
 
   useTask$(() => {
     const newImageIds = Array.from({ length: 1000 }, (_, i) => Date.now() + i);
     state.imageIds = newImageIds;
-  })
+  });
 
   const openModal = $((src: string) => {
     selectedImage.value = src;
@@ -152,12 +166,32 @@ export const ImageMasonry = component$(() => {
     selectedImage.value = null;
   });
 
+  useVisibleTask$(({
+    track
+  }) => {
+    track(() => state.imageIds)
+    if (containerRef.value) {
+      const swapy = Swapy.createSwapy(containerRef.value, {
+        animation: 'dynamic'
+      });
+      //
+      swapy.onSwap((event: any) => {
+        console.log(event)
+        console.log('New order:', event.data.array);
+        // Here you can update your state or send the new order to a server
+      });
+    }
+  });
+
   return (
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mx-auto max-w-[692px] overflow-x-hidden px-6 pb-12 pt-4 antialiased sm:py-32 md:overflow-x-visible md:pb-12 md:pt-4">
       <h1 class="text-3xl font-bold mb-8 text-center">Random Image Gallery</h1>
-      <div class="masonry-grid">
+      <div 
+        ref={containerRef}
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[100px]"
+      >
         {state.imageIds.map((id, index) => (
-          <LazyImage key={id} id={id} index={index} onClick$={openModal} />
+          <LazyImage id={id} index={index} onClick$={openModal} key={id}/>
         ))}
       </div>
       {selectedImage.value && (
@@ -180,7 +214,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: "description",
-      content: "A gallery of unique random images using Qwik and Unpic with masonry layout, mixed loading strategies, and modal view",
+      content: "A gallery of unique random images using Qwik and Unpic with masonry layout, mixed loading strategies, modal view, and Swapy for drag-and-drop functionality",
     },
   ],
 };

@@ -50,5 +50,8 @@
     "vercel": "^29.1.1",
     "vite": "5.3.5",
     "vite-tsconfig-paths": "^4.2.1"
+  },
+  "dependencies": {
+    "swapy": "^0.2.1"
   }
 }
