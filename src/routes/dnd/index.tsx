@@ -3,6 +3,10 @@ import {
   useSignal,
   useVisibleTask$, 
   $,
+  createContextId,
+  Slot,
+  useContextProvider,
+  useContext,
 } from '@builder.io/qwik';
 import Sortable from 'sortablejs';
 
@@ -22,26 +26,41 @@ interface Section {
   columns: Column[];
 }
 
-interface PageProps {
-  initialSections: Section[];
-}
+// Create a context for the layout data
+export const LayoutContext = createContextId<{ data: Section[] }>('layout-context');
 
-export const IntegratedLayoutManager = component$<PageProps>(({ initialSections }) => {
-  const data = useSignal(initialSections);
+export const LayoutProvider = component$<{ initialSections: Section[] }>(({ initialSections }) => {
+  const layoutState = useSignal<Section[]>(initialSections);
+
+  // Provide the context
+  useContextProvider(LayoutContext, {
+    get data() {
+      return layoutState.value as Section[];
+    },
+    set data(newData: Section[]) {
+      layoutState.value = newData;
+    }
+  });
+
+  return <Slot />;
+});
+
+export const IntegratedLayoutManager = component$(() => {
+  const layoutContext = useContext(LayoutContext);
   const isEditMode = useSignal(true);
   const containerRef = useSignal<HTMLElement>();
   const sidebarRef = useSignal<HTMLElement>();
 
   useVisibleTask$(({track}) => {
-    track(() => data.value);
+    track(() => layoutContext.data);
     track(() => isEditMode.value);
-    console.log(data.value);
+    console.log(layoutContext.data);
 
     const onDragEnd = $((event: Sortable.SortableEvent, itemType: 'section' | 'column' | 'element') => {
       const { from, to, oldIndex, newIndex, item } = event;
       if (oldIndex === newIndex && from === to) return; // No change
 
-      const newState = JSON.parse(JSON.stringify(data.value)); // Deep clone the state
+      const newState = JSON.parse(JSON.stringify(layoutContext.data)); // Deep clone the state
 
       const toSectionIndex = parseInt(to.closest('.section')?.getAttribute('data-section-index') || '0');
       const toColumnIndex = parseInt(to.closest('.column')?.getAttribute('data-column-index') || '0');
@@ -79,8 +98,8 @@ export const IntegratedLayoutManager = component$<PageProps>(({ initialSections 
         }
       }
 
-      // Update the signal value
-      data.value = newState;
+      // Update the context value
+      layoutContext.data = newState;
     });
 
     if (isEditMode.value && containerRef.value) {
@@ -141,7 +160,7 @@ export const IntegratedLayoutManager = component$<PageProps>(({ initialSections 
   });
 
   return (
-    <div>
+        <div>
       <button 
         onClick$={toggleEditMode} 
         class="mb-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -175,7 +194,7 @@ export const IntegratedLayoutManager = component$<PageProps>(({ initialSections 
             ref={containerRef}
             class="flex-1 p-4"
           >
-            {data.value.map((section, sectionIndex) => (
+            {layoutContext.data.map((section, sectionIndex) => (
               <div key={section.id} class="mb-8 p-4 bg-blue-100 rounded-lg section" data-item-type="section" data-item-id={section.id} data-section-index={sectionIndex}>
                 <div class="flex items-center mb-4">
                   <span class="section-handle cursor-move mr-2">☰</span>
@@ -216,7 +235,7 @@ export const IntegratedLayoutManager = component$<PageProps>(({ initialSections 
       ) : (
         // Preview Mode
         <div class="container mx-auto p-4">
-          {data.value.map((section) => (
+          {layoutContext.data.map((section) => (
             <div key={section.id} class="mb-8">
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {section.columns.map((column) => (
@@ -291,5 +310,9 @@ export default component$(() => {
     },
   ];
 
-  return <IntegratedLayoutManager initialSections={sampleData} />;
+  return (
+    <LayoutProvider initialSections={sampleData}>
+      <IntegratedLayoutManager />
+    </LayoutProvider>
+  );
 });
