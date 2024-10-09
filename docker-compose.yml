@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  node-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: final
+    image: node-app:${NODE_VERSION:-18.18.2}
+    container_name: node-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - ORIGIN=https://example.com
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

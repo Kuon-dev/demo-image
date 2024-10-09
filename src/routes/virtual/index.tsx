@@ -7,7 +7,7 @@ import {
   useComputed$,
 } from '@builder.io/qwik';
 import { Image } from '@unpic/qwik';
-import * as Swapy from 'swapy';
+// import * as Swapy from 'swapy';
 import type { DocumentHead } from "@builder.io/qwik-city";
 import { Modal } from '~/components/img/modal-img';
 
